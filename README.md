@@ -10,3 +10,6 @@ Parallel Boolean Matching based on Espresso
     ---- openapi-tbb-2021.10.0  
 3. 安裝visual studio 2022 後，點Espresso-BM-ver6.0.sin檔 開啟專案  
 4. 開啟專案後即可執行  
+  
+  
+pla 資料夾為各式pla電路，內有兩個完整的benchmark壓縮檔 MCNC與ISCAS 
