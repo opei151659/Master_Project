@@ -1,4 +1,4 @@
-# Mater_Project
+# Master_Project
 Parallel Boolean Matching based on Espresso  
   
 # 安裝步驟
