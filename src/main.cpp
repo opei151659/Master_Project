@@ -21,11 +21,14 @@ char* optarg;            /* argument associated with option */
 
 /* ==========user define==========*/
 int isINP, isINN, isOUTP, isOUTN; /* is INput/OUTput Permute/iNverse*/
+int RIP, RIPA, ROP, ROPA;
 int row_num, col_num;
 int ppbm_thread_num, ppbm_chunk_size, ppbm_option;
 float remove_sf_rate;
 int extand_input_num;
-int CAL_SIG_OUTPUT, CAL_SIG_INPUT, CAL_ALL_MCQE;
+int EXP_SIG_OUTPUT, EXP_SIG_INPUT, EXP_ALL_MCQE, EXP_WINDOW_SIZE;
+int use_with_thread_pool; 
+
 
 int SIG_key;
 int MCQE_key;
@@ -35,7 +38,7 @@ static FILE* last_fp;
 /* !!!!!輸入的type類型*/
 static int input_type = FD_type; //FR_type; FD_type
 
-void getPLA(int opt, int argc, char** argv, pPLA* PLA, int out_type);
+void getPLA(string pla_name, pPLA* PLA, int out_type);
 void delete_arg(int* argc,  char** argv, int num);
 void init_runtime(void);
 void backward_compatibility_hack(int* argc, char** argv, int* option, int* out_type);
@@ -154,96 +157,309 @@ int main(int argc, char** argv) {
         printf("# %s\n", VERSION);
     }
 
-    /* READ PLA */
-    /* the remaining arguments are argv[optind ... argc-1] */
-    optind = 1;
-    string str;
-    if (argc == 4) {
-        str = argv[3];
+
+    arg_range argr;
+    vector<string> arguments(argv, argv + argc);
+    int cnt_pla = 0;
+
+
+    isINP = 0;
+    isINN = 0;
+    isOUTP = 0;
+    isOUTN = 0;
+    ppbm_option = 0;
+    ppbm_thread_num = 1;
+    ppbm_chunk_size = 100;
+    Total_parallel = 0;
+    extand_input_num = 0;
+    remove_sf_rate = 0;
+    row_num = 1;
+    col_num = 1;
+    SIG_key = 7;
+    MCQE_key = 15;
+    use_with_thread_pool = 1;
+
+    EXP_SIG_OUTPUT = 0;
+    EXP_SIG_INPUT = 0;
+    EXP_WINDOW_SIZE = 0;
+    EXP_ALL_MCQE = 0;
+    for (int i = 1; i < argc; ++i) {  // 從 1 開始，跳過程式名稱
+        string arg = arguments[i];
+        
+        if (arg[0] == '-') {
+            if (arg == "-IP") {
+                isINP = 1;
+            }
+            else if (arg == "-IPA") {
+                isINN = 1;
+            }
+            else if (arg == "-OP") {
+                isOUTP = 1;
+            }
+            else if (arg == "-OPA") {
+                isOUTN = 1;
+            }
+            else if (arg == "-RIP") {
+                RIP = 1;
+            }
+            else if (arg == "-RIPA") {
+                RIPA = 1;
+            }
+            else if (arg == "-ROP") {
+                ROP = 1;
+            }
+            else if (arg == "-ROPA") {
+                ROPA = 1;
+            }
+            else if (arg == "-OMP") {
+                if (ppbm_option != 0) {
+                    cerr << "you can only choose either OMP, CPP or TBB" << endl;
+                    exit(EXIT_FAILURE);
+                }
+                ppbm_option = 1;
+            }
+            else if (arg == "-CPP") {
+                if (ppbm_option != 0) {
+                    cerr << "you can only choose either OMP, CPP or TBB" << endl;
+                    exit(EXIT_FAILURE);
+                }
+                ppbm_option = 2;
+            }
+            else if (arg == "-TBB") {
+                if (ppbm_option != 0) {
+                    cerr << "you can only choose either OMP, CPP or TBB" << endl;
+                    exit(EXIT_FAILURE);
+                }
+                ppbm_option = 3;
+            }
+            else if (arg == "-ALLP") {
+                Total_parallel = 1;  // 是否執行全部平行化
+            }
+            else if (arg == "-NTP") {
+                use_with_thread_pool = 0;
+            }
+            else if (arg.find("-IN:") == 0) {
+                extand_input_num = argr.check_range_i("-IN", arg.substr(4)); // 是否要擴展輸入的input個數，數字小於原本大小包持原樣，最大為128 (0 ~ 128) 
+            }
+            else if (arg.find("-RM:") == 0) {
+                remove_sf_rate = argr.check_range_f("-RM", arg.substr(4)); // 移除on-set 與off-set 的百分比 (0.0 ~ 1.1) ex: 0.1表示移除10%
+            }
+            else if (arg.find("-ROW:") == 0) {
+                row_num = argr.check_range_i("-ROW", arg.substr(5));  // row(on-set) 要分割的份數
+            }
+            else if (arg.find("-COL:") == 0) {
+                col_num = argr.check_range_i("-COL", arg.substr(5));  // column(off-set) 要分割的份數
+            }
+            else if (arg.find("-T:") == 0) {
+                ppbm_thread_num = argr.check_range_i("-T", arg.substr(3)); //使用執行緒的最大個數(最小為1)
+            }
+            else if (arg.find("-CHK:") == 0) {
+                ppbm_chunk_size = argr.check_range_i("-CHK", arg.substr(5));   // 執行相同任務多執行緒分配任務的個數
+            }
+            else if (arg.find("-SIG:") == 0) {
+                SIG_key = argr.check_range_i("-SIG", arg.substr(5));  // 使用的特徵值  0b0001: check_unate, 0b0010 = check_ENE, 0b0100 = check_KSIG, 0b1000 = check_cofactor 可以同時使用多個
+            }
+            else if (arg.find("-MCQE:") == 0) {
+                MCQE_key = argr.check_range_i("-MCQE", arg.substr(6));  // 使用的MCQE  0b0001: Rule1, 0b0010 = Rule2, 0b0100 = Rule3, 0b1000 = Rule4 可以同時使用多個
+            }
+            /* 以下是特定實驗的指令 使用時建議單獨使用*/
+            /* 輸出特徵值實驗*/
+            /* 範例 pla\cm150a.pla pla\cm150a.pla OutputSIG*/
+            else if (arg == "-OutputSIG") {
+                extand_input_num = 0;
+                isINP = 1;
+                isINN = 1;
+                isOUTP = 0;
+                isOUTN = 0;
+                remove_sf_rate = 0;
+                ppbm_thread_num = 1;
+                EXP_SIG_OUTPUT = 1; /*計算輸出特徵值*/
+            }
+            /* 輸入特徵值實驗*/
+            /* 範例 pla\cm150a.pla pla\cm150a.pla InputSIG*/
+            else if (arg == "-InputSIG") {
+                extand_input_num = 0;
+                isINP = 1;
+                isINN = 1;
+                isOUTP = 0;
+                isOUTN = 0;
+                remove_sf_rate = 0;
+                ppbm_thread_num = 1;
+                EXP_SIG_INPUT = 1; /*計算輸入特徵值*/
+            }
+            /* MCQE所有組合實驗*/
+            /* 範例 pla\cm150a.pla pla\cm150a.pla ALLMCQE*/
+            else if (arg == "-ALLMCQE") {
+                extand_input_num = 0;
+                isINP = 1;
+                isINN = 1;
+                isOUTP = 0;
+                isOUTN = 0;
+                remove_sf_rate = 0;
+                ppbm_thread_num = 1;
+                EXP_ALL_MCQE = 1; /*計算MCQE所有組合*/
+            }
+            else if (arg == "-WINDOWSIZE") {
+                isINP = 1;
+                isINN = 1;
+                isOUTP = 0;
+                isOUTN = 0;
+                remove_sf_rate = 0;
+                ppbm_thread_num = 1;
+                EXP_WINDOW_SIZE = 2; // 目前只能為2 僅實作window size = 2
+            }
+            else {
+                cout << "unknow argument " << arg << endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+        else if (arg.find(".pla") != string::npos) {
+            if (cnt_pla >= 2) {
+                cout << "too many pla file" << endl;
+                exit(EXIT_FAILURE);
+            }
+            if (cnt_pla == 0) getPLA(arg, &PLA, out_type);   // PLA 1 (.pla)
+            if (cnt_pla == 1) getPLA(arg, &PLA1, out_type);  // PLA 2 (.pla)
+            cnt_pla++;
+            continue;
+        }
+        else {
+            cout << "wrong argument" << arg << endl;
+            exit(EXIT_FAILURE);
+        }
+        
     }
-    PLA = PLA1 = NIL(PLA_t);
-    if (argc == 2) {
-        getPLA(1, argc, argv, &PLA, out_type);
+    if (ppbm_option == 0) ppbm_option = 2;
+    if (cnt_pla == 0) {
+        cerr << "no pla file" << endl; 
+        exit(EXIT_FAILURE);
     }
-    /* 輸出特徵值實驗*/
-    /* 範例 pla\cm150a.pla pla\cm150a.pla OutputSIG*/
-    else if (argc == 4 && str == "OutputSIG") {
-        getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
-        getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
-        extand_input_num = 0;
-        isINP = 1;
-        isINN = 1;
-        isOUTP = 0;
-        isOUTN = 0;
-        remove_sf_rate = 0;
-        ppbm_thread_num = 1;
-        CAL_SIG_OUTPUT = 1; /*計算輸出特徵值*/
-        CAL_SIG_INPUT = 0;
-        CAL_ALL_MCQE = 0;
+    else if (cnt_pla == 1) {
+        getPLA(PLA->filename, &PLA1, out_type);
     }
-    /* 輸入特徵值實驗*/
-    /* 範例 pla\cm150a.pla pla\cm150a.pla InputSIG*/
-    else if (argc == 4 && str == "InputSIG") {
-        getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
-        getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
-        extand_input_num = 0;
-        isINP = 1;
-        isINN = 1;
-        isOUTP = 0;
-        isOUTN = 0;
-        remove_sf_rate = 0;
-        ppbm_thread_num = 1;
-        CAL_SIG_OUTPUT = 0; 
-        CAL_SIG_INPUT = 1; /*計算輸入特徵值*/
-        CAL_ALL_MCQE = 0;
-    }
-    else if (argc == 4 && str == "AllMCQE") {
-        getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
-        getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
-        extand_input_num = 0;
-        isINP = 1;
-        isINN = 1;
-        isOUTP = 0;
-        isOUTN = 0;
-        remove_sf_rate = 0;
-        ppbm_thread_num = 1;
-        CAL_SIG_OUTPUT = 0;
-        CAL_SIG_INPUT = 0; /*計算輸入特徵值*/
-        CAL_ALL_MCQE = 1;
-    }
-    /*範例 pla\cm150a.pla pla\cm150a.pla 0 1 1 0 0 0.0 1 0 1 100 2 7 0 0*/
-    else if (argc == 17) { // 17 個輸入參數
-        getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
-        getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
-        extand_input_num = atoi(argv[optind++]);        // 是否要擴展輸入的input個數，數字小於原本大小包持原樣，最大為128  (0 ~ 128)
-        isINP = atoi(argv[optind++]);                   // 是否有input permutation (1/0)
-        isINN = atoi(argv[optind++]);                   // 是否有input phase assignment (1/0)
-        isOUTP = atoi(argv[optind++]);                  // 是否有output permutation (1/0) 
-        isOUTN = atoi(argv[optind++]);                  // 是否有output phase assignment (1/0)
-        remove_sf_rate = atof(argv[optind++]);          // 移除on-set 與off-set 的百分比  (0 ~ 1) 0.1表示移除10%
-        row_num = atoi(argv[optind++]);                 // row(on-set) 要分割的份數
-        col_num = atoi(argv[optind++]);                 // column(off-set) 要分割的份數
-        ppbm_thread_num = atoi(argv[optind++]);         // 使用執行緒的最大個數 (最小為1)
-        ppbm_chunk_size = atoi(argv[optind++]);         // 執行相同任務多執行緒分配任務的個數
-        ppbm_option = atoi(argv[optind++]);             // 使用的平行化函式庫 1:OMP 2:CPP 3:TBB
-        SIG_key = atoi(argv[optind++]);                 // 使用的特徵值  0b0001: check_unate, 0b0010 = check_ENE, 0b0100 = check_KSIG, 0b1000 = check_cofactor 可以同時使用多個
-        MCQE_key = atoi(argv[optind++]);                // 使用的MCQE  0b0001: Rule1, 0b0010 = Rule2, 0b0100 = Rule3, 0b1000 = Rule4 可以同時使用多個
-        Total_parallel = atoi(argv[optind++]);          // 是否執行全部平行化 (1/0)
-        CAL_SIG_OUTPUT = 0; /*不計算輸出特徵值*/
-    }
-    else {
-        printf("argv doesn't have pla\n");
+    if (SIG_key != 0 && remove_sf_rate > 0) {
+        cerr << "you can't use signature with ISF, use '-SIG:0'" << endl;
+        exit(EXIT_FAILURE);
     }
 
-    
 
-    if (argc == 17 || argc == 4) {
+    if (Total_parallel == 1 && ppbm_option != 2) {
+        cerr << "you can only use CPP with total parallel method" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (Total_parallel == 1 && extand_input_num != 0) {
+        cerr << "extand input num with Total parallel maybe will crash!!!" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (Total_parallel == 1 && use_with_thread_pool != 1) {
+        cerr << "you can't use total parallel method without thread pool" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (Total_parallel == 1 && EXP_WINDOW_SIZE != 0) {
+        cerr << "you can't use total parallel method with window size != 0" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (ppbm_option == 1 && use_with_thread_pool != 1) {
+        cerr << "you can't use OpenMP with/without thread pool" << endl;
+        exit(EXIT_FAILURE);
+    }
+    if (ppbm_option == 3 && use_with_thread_pool != 1) {
+        cerr << "you can't use TBB without thread pool" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+
+    ///* READ PLA */
+    ///* the remaining arguments are argv[optind ... argc-1] */
+    //optind = 1;
+    //string str;
+    //if (argc == 4) {
+    //    str = argv[3];
+    //}
+    //PLA = PLA1 = NIL(PLA_t);
+    //if (argc == 2) {
+    //    getPLA(1, argc, argv, &PLA, out_type);
+    //}
+    ///* 輸出特徵值實驗*/
+    ///* 範例 pla\cm150a.pla pla\cm150a.pla OutputSIG*/
+    //else if (argc == 4 && str == "OutputSIG") {
+    //    getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
+    //    getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
+    //    extand_input_num = 0;
+    //    isINP = 1;
+    //    isINN = 1;
+    //    isOUTP = 0;
+    //    isOUTN = 0;
+    //    remove_sf_rate = 0;
+    //    ppbm_thread_num = 1;
+    //    EXP_SIG_OUTPUT = 1; /*計算輸出特徵值*/
+    //    EXP_SIG_INPUT = 0;
+    //    EXP_ALL_MCQE = 0;
+    //}
+    ///* 輸入特徵值實驗*/
+    ///* 範例 pla\cm150a.pla pla\cm150a.pla InputSIG*/
+    //else if (argc == 4 && str == "InputSIG") {
+    //    getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
+    //    getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
+    //    extand_input_num = 0;
+    //    isINP = 1;
+    //    isINN = 1;
+    //    isOUTP = 0;
+    //    isOUTN = 0;
+    //    remove_sf_rate = 0;
+    //    ppbm_thread_num = 1;
+    //    EXP_SIG_OUTPUT = 0; 
+    //    EXP_SIG_INPUT = 1; /*計算輸入特徵值*/
+    //    EXP_ALL_MCQE = 0;
+    //}
+    //else if (argc == 4 && str == "AllMCQE") {
+    //    getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
+    //    getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
+    //    extand_input_num = 0;
+    //    isINP = 1;
+    //    isINN = 1;
+    //    isOUTP = 0;
+    //    isOUTN = 0;
+    //    remove_sf_rate = 0;
+    //    ppbm_thread_num = 1;
+    //    EXP_SIG_OUTPUT = 0;
+    //    EXP_SIG_INPUT = 0; /*計算輸入特徵值*/
+    //    EXP_ALL_MCQE = 1;
+    //}
+    ///*範例 pla\cm150a.pla pla\cm150a.pla 0 1 1 0 0 0.0 1 0 1 100 2 7 0 0*/
+    //else if (argc == 17) { // 17 個輸入參數
+    //    getPLA(optind++, argc, argv, &PLA, out_type);   // PLA 1 (.pla)
+    //    getPLA(optind++, argc, argv, &PLA1, out_type);  // PLA 2 (.pla)
+    //    extand_input_num = atoi(argv[optind++]);        // 是否要擴展輸入的input個數，數字小於原本大小包持原樣，最大為128  (0 ~ 128)
+    //    isINP = atoi(argv[optind++]);                   // 是否有input permutation (1/0)
+    //    isINN = atoi(argv[optind++]);                   // 是否有input phase assignment (1/0)
+    //    isOUTP = atoi(argv[optind++]);                  // 是否有output permutation (1/0) 
+    //    isOUTN = atoi(argv[optind++]);                  // 是否有output phase assignment (1/0)
+    //    remove_sf_rate = atof(argv[optind++]);          // 移除on-set 與off-set 的百分比  (0 ~ 1) 0.1表示移除10%
+    //    row_num = atoi(argv[optind++]);                 // row(on-set) 要分割的份數
+    //    col_num = atoi(argv[optind++]);                 // column(off-set) 要分割的份數
+    //    ppbm_thread_num = atoi(argv[optind++]);         // 使用執行緒的最大個數 (最小為1)
+    //    ppbm_chunk_size = atoi(argv[optind++]);         // 執行相同任務多執行緒分配任務的個數
+    //    ppbm_option = atoi(argv[optind++]);             // 使用的平行化函式庫 1:OMP 2:CPP 3:TBB
+    //    SIG_key = atoi(argv[optind++]);                 // 使用的特徵值  0b0001: check_unate, 0b0010 = check_ENE, 0b0100 = check_KSIG, 0b1000 = check_cofactor 可以同時使用多個
+    //    MCQE_key = atoi(argv[optind++]);                // 使用的MCQE  0b0001: Rule1, 0b0010 = Rule2, 0b0100 = Rule3, 0b1000 = Rule4 可以同時使用多個
+    //    Total_parallel = atoi(argv[optind++]);          // 是否執行全部平行化 (1/0)
+    //    EXP_SIG_OUTPUT = 0; /*不計算輸出特徵值*/
+    //}
+    //else {
+    //    printf("argv doesn't have pla\n");
+    //}
+
+    //
+
+    //if (argc == 17 || argc == 4) {
         /* 限制最大執行緒個數*/
         tbb::global_control MAXTHREADS(tbb::global_control::max_allowed_parallelism, ppbm_thread_num);
         /*tbb::task_arena limited(1); */
         print_solution = FALSE;
         BM(PLA, PLA1, isINP, isINN, isOUTP, isOUTN);
-    }
+    //}
+
 
     if (summary || trace) {
         if (PLA != NIL(PLA_t)) PLA_summary(PLA);
@@ -281,32 +497,24 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void getPLA(int opt, int argc, char** argv, pPLA* PLA, int out_type)
+void getPLA(string pla_name, pPLA* PLA, int out_type)
 {
     FILE* fp;
     int needs_dcset, needs_offset;
-    char* fname;
-
-    if (opt >= argc) {
-        fp = stdin;
-        fname = "(stdin)";
+    if ((fp = fopen(pla_name.c_str(), "r")) == NULL) {
+        fprintf(stderr, "Unable to open %s\n", pla_name);
+        exit(1);
     }
-    else {
-        fname = argv[opt];
-        if ((fp = fopen(argv[opt], "r")) == NULL) {
-            fprintf(stderr, "%s: Unable to open %s\n", argv[0], fname);
-            exit(1);
-        }
-    }
+    
 
     needs_dcset = TRUE; //default 
     needs_offset = TRUE;
 
     if (read_pla(fp, needs_dcset, needs_offset, input_type, PLA) == EOF) {
-        fprintf(stderr, "%s: Unable to find PLA on file %s\n", argv[0], fname);
+        fprintf(stderr, "Unable to find PLA on file %s\n", pla_name);
         exit(1);
     }
-    (*PLA)->filename = _strdup(fname);
+    (*PLA)->filename = _strdup(pla_name.c_str());
     filename = (*PLA)->filename;
     last_fp = fp;
 }

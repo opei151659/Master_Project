@@ -139,7 +139,7 @@ void check_Unate_output(pset p_out, pPLA PLA1, pPLA PLA2) {
 }
 
 void check_character_value(int key, pset totality, pPLA PLA1, pPLA PLA2) {
-	fprintf(stderr, "CV key %d%d%d%d\n", (key & 1) > 0, (key & 2) > 0, (key & 4) > 0, (key & 8) > 0);
+	fprintf(stderr, "Singature key %d%d%d%d\n", (key & 1) > 0, (key & 2) > 0, (key & 4) > 0, (key & 8) > 0);
 	if (key & 1) {
 		EXECost(check_unate(totality, PLA1, PLA2), "PUNU check");
 		printf("cnt_unate %d\n", set_count_ones(totality));

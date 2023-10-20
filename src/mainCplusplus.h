@@ -199,14 +199,20 @@ struct pm_Detail {
 /**********************/
 /***   global var	***/
 /**********************/
-extern int CAL_SIG_OUTPUT;	/* 是否計算輸出特徵值  (1/0)*/
-extern int CAL_SIG_INPUT;
-extern int CAL_ALL_MCQE;
+extern int EXP_SIG_OUTPUT;	/* 是否計算輸出特徵值  (1/0)*/
+extern int EXP_SIG_INPUT; /* 是否計算輸入特徵值  (1/0)*/
+extern int EXP_ALL_MCQE; /* 是否計算所有MCQE組合  (1/0)*/
+extern int EXP_WINDOW_SIZE;
 extern mv_cube mvcube; 
 extern cube_struct mycube;
 extern pm_Detail pm_detail;
-extern int row_num;
-extern int col_num;
+extern int RIP; // random input permutation
+extern int RIPA; // random input phase assignment
+extern int ROP; // random output permutation
+extern int ROPA; // random output phase assignment
+extern int use_with_thread_pool;
+extern int row_num; //row 被分割個份數
+extern int col_num; //col 被分割個份數
 extern mutex memory_mtx;
 extern int ppbm_thread_num;
 extern int ppbm_chunk_size;

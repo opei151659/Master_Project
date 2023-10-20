@@ -133,6 +133,7 @@ public:
 	}
 
 	void check_Rule(int key) {
+		fprintf(stderr, "MCQE key %d%d%d%d\n", (key & 1) > 0, (key & 2) > 0, (key & 4) > 0, (key & 8) > 0);
 		if (key <= 0)
 			return;
 		EXECost_W(check_implies_relation(sf_P_non_DC, sf_p_non_DC, P_relation, P_re_relation), T_P_rela);
@@ -370,9 +371,10 @@ public:
 	void lit_pos_copy(pset r, pset a);
 
 	void display_cost() {
+		// P 與Q 各自之間的關係個數
 		printf("P Q relation %d %d %d %d\n", P_relation.size(), Q_relation.size(), P_re_relation.size(), Q_re_relation.size());
-		printf("rule %d %d %d %d %d %d %d\n", TABLE_PQ->count * TABLE_PQ->sf_size, cnt_R0, cnt_R1, cnt_R2, cnt_R3, cnt_R4, cnt_R5);
-		printf("mcdb cost %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf\n",
+		printf("MCQE Rule %d %d %d %d %d %d %d\n", TABLE_PQ->count * TABLE_PQ->sf_size, cnt_R0, cnt_R1, cnt_R2, cnt_R3, cnt_R4, cnt_R5);
+		printf("NCQE Rule cost %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf  %.6lf\n",
 			(double)T_SORT / (double)CLOCKS_PER_SEC, (double)T_lit01 / (double)CLOCKS_PER_SEC, 
 			(double)T_Out_IS / (double)CLOCKS_PER_SEC, (double)T_P_rela / (double)CLOCKS_PER_SEC, (double)T_Q_rela / (double)CLOCKS_PER_SEC,
 			(double)T_R1 / (double)CLOCKS_PER_SEC, (double)T_R2 / (double)CLOCKS_PER_SEC, (double)T_R3 / (double)CLOCKS_PER_SEC, (double)T_R4 / (double)CLOCKS_PER_SEC);

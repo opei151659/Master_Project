@@ -118,3 +118,79 @@ struct {
     {"strong", &use_super_gasp, TRUE},
     {0, 0, 0}
 };
+
+// 把计絛瞅
+class arg_range {
+    unordered_map<string, pair<int, int>> args;
+public:
+    arg_range() {
+        args["-IN"] = make_pair(1, 128);
+        args["-RM"] = make_pair(0, 1);
+        args["-ROW"] = make_pair(0, INT_MAX);
+        args["-COL"] = make_pair(0, INT_MAX);
+        args["-T"] = make_pair(1, std::thread::hardware_concurrency()); //祑砰CPU程磅︽狐计
+        args["-CHK"] = make_pair(1, INT_MAX);
+        args["-SIG"] = make_pair(0, 15);
+        args["-MCQE"] = make_pair(0, 15);
+    }
+    int check_range_i(string arg, string value) {
+        int intValue = 0;
+        if (args.find(arg) != args.end()) {
+            try {
+                intValue = stoi(value); // 盢把计锣传俱计
+                if (intValue >= args[arg].first && intValue <= args[arg].second) {  // 璹絛瞅浪琩
+                    //cout << arg << " " << intValue << std::endl;
+                }
+                else {
+                    cerr << arg << " out of range (" << args[arg].first << " ~ " << args[arg].second << ")" << endl;
+                    exit(EXIT_FAILURE);
+                }
+            }
+            catch (const std::invalid_argument& e) {
+                cerr << arg << " wrong format" << e.what() << endl;
+                exit(EXIT_FAILURE);
+            }
+            catch (const std::out_of_range& e) {
+                cerr << arg << " out of range (" << args[arg].first << " ~ " << args[arg].second << ")" << endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+        else {
+            cout << "wrong arguments" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        return  intValue;
+    }
+
+
+    float check_range_f(string arg, string value) {
+        float floatValue = 0.0;
+        if (args.find(arg) != args.end()) {
+            try {
+                floatValue = stof(value); // 盢把计锣传俱计
+                if (floatValue >= (float)args[arg].first && floatValue <= (float)args[arg].second) {  // 璹絛瞅浪琩
+                    //cout << arg << " " << floatValue << std::endl;
+                }
+                else {
+                    cerr << arg << " out of range (" << (float)args[arg].first << " ~ " << (float)args[arg].second << ")" << endl;
+                    exit(EXIT_FAILURE);
+                }
+            }
+            catch (const std::invalid_argument& e) {
+                cerr << arg << " wrong format" << e.what() << endl;
+                exit(EXIT_FAILURE);
+            }
+            catch (const std::out_of_range& e) {
+                cerr << arg << " out of range (" << args[arg].first << " ~ " << args[arg].second << ")" << endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+        else {
+            cout << "wrong arguments" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        return floatValue;
+    }
+};

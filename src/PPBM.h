@@ -8,7 +8,6 @@
 	3. TBB (intel TBB)
 
 	其中OMP 與TBB 可再細分為原paper作法與使用了一些加速方法的版本(較早期 故不完整 不包含在實驗中)
-	而CPP 則分為有使用執行緒池與未使用執行緒池兩種版本 用define use_thread_pool來開關
 */
 #ifndef PPBM_H
 #define PPBM_H
@@ -26,11 +25,10 @@
 
 using namespace std;
 
-
-#define use_thread_pool /* !!!若要執行無執行緒池版本的CPP 將這行註解掉!!!*/
 bool parallel_mvcube_feas_check_notation2(pset p, pset_family sf_vars, pset_family sf_sort, pset p_var_t, pset var_supercube, pset solution);
 void parallel_sf_removeRedundant(pset_family A);
 bool parallel_S_MAP(pset_family Totality, pset_family temp_Totality, pset Supercube, pset literal_pos, pset Q_non_DC, pset p_and, bool window = false);
+
 
 
 class parallel_and {
@@ -196,37 +194,34 @@ public:
 	/* 加速後的CPP平行化*/
 	void run_CPP() {
 		/* thread pool*/
-#ifdef use_thread_pool 
-		pool.reset_Thread_task_used_cnt();
-		current_thread_num = thread_num;
-		for (int id = 0; id < chunk_cnt; id++) {
-			pool.task_begin();
-			pool.enqueue(&parallel_and::work2, this, id);
-		}
+		if (use_with_thread_pool) {
+			pool.reset_Thread_task_used_cnt();
+			current_thread_num = thread_num;
+			for (int id = 0; id < chunk_cnt; id++) {
+				pool.task_begin();
+				pool.enqueue(&parallel_and::work2, this, id);
+			}
 
-		pool.wait();
-		cnt_and_called++;
-		//printf("AND chunk_cnt %d %d %d\n", chunk_cnt, pool.display_Thread_task_used_cnt(), (double)pool.display_Thread_task_used_cnt());
-		average_thread_used += (double)pool.display_Thread_task_used_cnt();//(double)chunk_cnt / (double)pool.display_Thread_task_used_cnt();
-		/*if (chunk_cnt > 1) {
-			
-			
-		}*/
-#endif
+			pool.wait();
+			cnt_and_called++;
+			//printf("AND chunk_cnt %d %d %d\n", chunk_cnt, pool.display_Thread_task_used_cnt(), (double)pool.display_Thread_task_used_cnt());
+			average_thread_used += (double)pool.display_Thread_task_used_cnt();//(double)chunk_cnt / (double)pool.display_Thread_task_used_cnt();
+		}
+		
 		/* bad way without thread pool*/
-#ifndef use_thread_pool
-		current_thread_num = MIN(thread_num, chunk_cnt);
-		for (int id_chunk = 0; id_chunk < chunk_cnt; ) {
-			vector<thread> threads;
-			for (int thread_id = 0; thread_id < thread_num && id_chunk < chunk_cnt; thread_id++, id_chunk++) {
-				threads.emplace_back(&parallel_and::work_no_thread_pool, this, thread_id, id_chunk, id_chunk+1);
-			}
-			for (int thread_id = 0; thread_id < threads.size(); thread_id++) {
-				threads[thread_id].join();
-			}
+		else {
+			current_thread_num = MIN(thread_num, chunk_cnt);
+			for (int id_chunk = 0; id_chunk < chunk_cnt; ) {
+				vector<thread> threads;
+				for (int thread_id = 0; thread_id < thread_num && id_chunk < chunk_cnt; thread_id++, id_chunk++) {
+					threads.emplace_back(&parallel_and::work_no_thread_pool, this, thread_id, id_chunk, id_chunk + 1);
+				}
+				for (int thread_id = 0; thread_id < threads.size(); thread_id++) {
+					threads[thread_id].join();
+				}
 
+			}
 		}
-#endif
 	}
 
 	/* 加速後的TBB平行化*/
@@ -564,40 +559,40 @@ public:
 		}
 	}
 
-	void run_CPP(vector<mutex>& mutexs) {
-#ifdef use_thread_pool 
+	void run_CPP(vector<mutex>& mutexs) { 
 		/* thread_pool*/
-		pool.reset_Thread_task_used_cnt();
-		for (int id = 0; id < chunk_cnt; id++) {
-			pool.task_begin();
-			pool.enqueue(&parallel_remove_redundant::work2_2, this, id, ref(mutexs));
+		if (use_with_thread_pool) {
+			pool.reset_Thread_task_used_cnt();
+			for (int id = 0; id < chunk_cnt; id++) {
+				pool.task_begin();
+				pool.enqueue(&parallel_remove_redundant::work2_2, this, id, ref(mutexs));
+			}
+			pool.wait();
+			cnt_and_called++;
+			//printf("RR chunk_cnt %d %d %d\n", chunk_cnt, pool.display_Thread_task_used_cnt(), (double)pool.display_Thread_task_used_cnt());
+			average_thread_used += (double)pool.display_Thread_task_used_cnt();//(double)chunk_cnt / (double)pool.display_Thread_task_used_cnt();
+			/*if (chunk_cnt > 1) {
+
+
+			}*/
 		}
-		pool.wait();
-		cnt_and_called++;
-		//printf("RR chunk_cnt %d %d %d\n", chunk_cnt, pool.display_Thread_task_used_cnt(), (double)pool.display_Thread_task_used_cnt());
-		average_thread_used += (double)pool.display_Thread_task_used_cnt();//(double)chunk_cnt / (double)pool.display_Thread_task_used_cnt();
-		/*if (chunk_cnt > 1) {
-			
-			
-		}*/
-#endif
 		/* without thread pool*/
-#ifndef use_thread_pool 
-		vector<thread> threads;
-		int chunk_cnt_size = chunk_cnt / thread_num;
-		for (int thread_id = 0; thread_id < thread_num; thread_id++) {
-			if ((thread_id + 1) * chunk_cnt_size >= chunk_cnt) {
-				threads.emplace_back(&parallel_remove_redundant::work2_without_thread_pool, this, ref(mutexs), thread_id * chunk_cnt_size, chunk_cnt);
-				break;
+		else {
+			vector<thread> threads;
+			int chunk_cnt_size = chunk_cnt / thread_num;
+			for (int thread_id = 0; thread_id < thread_num; thread_id++) {
+				if ((thread_id + 1) * chunk_cnt_size >= chunk_cnt) {
+					threads.emplace_back(&parallel_remove_redundant::work2_without_thread_pool, this, ref(mutexs), thread_id * chunk_cnt_size, chunk_cnt);
+					break;
+				}
+				else {
+					threads.emplace_back(&parallel_remove_redundant::work2_without_thread_pool, this, ref(mutexs), thread_id * chunk_cnt_size, (thread_id + 1) * chunk_cnt_size);
+				}
 			}
-			else {
-				threads.emplace_back(&parallel_remove_redundant::work2_without_thread_pool, this, ref(mutexs), thread_id * chunk_cnt_size, (thread_id + 1) * chunk_cnt_size);
+			for (int thread_id = 0; thread_id < threads.size(); thread_id++) {
+				threads[thread_id].join();
 			}
 		}
-		for (int thread_id = 0; thread_id < threads.size(); thread_id++) {
-			threads[thread_id].join();
-		}
-#endif
 	}
 	void run_TBB(vector<mutex>& mutexs) {
 		tbb::parallel_for(0, thread_num, 1, [&](unsigned long long thread_id) {

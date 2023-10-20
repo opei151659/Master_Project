@@ -73,7 +73,7 @@ void BM(pPLA PLA1, pPLA PLA2, bool INP, bool INPA, bool OUTP, bool OUTPA) {
 	mvcube.init(INP, INPA, OUTP, OUTPA);  //mvcube.display();
 	DATA.set(mvcube.num_mv_var, mvcube.num_output);
 	/* 亂數測資 設為true*/
-	DATA.random(PLA1, PLA2, false, false, false, false); // 打亂PLA2  亂數PLA2輸入排序, 亂數PLA2輸入相位轉換, 亂數PLA2輸出排序, 亂數PLA2輸出相位轉換
+	DATA.random(PLA1, PLA2, RIP, RIPA, ROP, ROPA); // 打亂PLA2  亂數PLA2輸入排序, 亂數PLA2輸入相位轉換, 亂數PLA2輸出排序, 亂數PLA2輸出相位轉換
 	DATA.display();
 
 
@@ -91,7 +91,7 @@ void BM(pPLA PLA1, pPLA PLA2, bool INP, bool INPA, bool OUTP, bool OUTPA) {
 	}
 
 	/* 檢查所有輸出特徵值的組合*/
-	if (CAL_SIG_OUTPUT == 1) {
+	if (EXP_SIG_OUTPUT == 1) {
 		cout << "OUTPUT SIG TEST\n";
 		run_OutputSIG_TEST(PLA1, PLA2);
 		return;
@@ -102,14 +102,14 @@ void BM(pPLA PLA1, pPLA PLA2, bool INP, bool INPA, bool OUTP, bool OUTPA) {
 		SIG_key = 0;
 
 	/* 檢查所有輸入特徵值的組合*/
-	if (CAL_SIG_INPUT == 1) {
+	if (EXP_SIG_INPUT == 1) {
 		cout << "INPUT SIG TEST\n";
 		run_InputSIG_TEST(GETSET(Totality, 0), PLA1, PLA2);
 		return;
 	}
 
 
-	if (CAL_ALL_MCQE == 1) {
+	if (EXP_ALL_MCQE == 1) {
 		/* 計算所有MCQE的組合*/
 		MCDB mcdb(PLA1->F, PLA2->R, mvcube.num_mv_var, mvcube.is_input_phase_assigment);
 		mcdb.pre_run(mvcube.first_word, mvcube.last_word, mvcube.first_bit, mvcube.last_bit);
@@ -168,7 +168,7 @@ void BM(pPLA PLA1, pPLA PLA2, bool INP, bool INPA, bool OUTP, bool OUTPA) {
 		mcdb.check_Rule(MCQE_key); /* 0bDCBA  A:R1 B:R2 C:R3 D:R4*/
 		printf("After MCDB: %d\n", mcdb.cal_TABLE_PQ());
 		//mcdb.display();
-		mcdb.display_cost();
+		//mcdb.display_cost();
 	
 
 		/* 非單執行緒才建立執行緒池*/
@@ -221,13 +221,11 @@ void BM(pPLA PLA1, pPLA PLA2, bool INP, bool INPA, bool OUTP, bool OUTPA) {
 vector<int> cnt_supercube_pq;
 #endif
 pset_family partial_mapping(pset_family Totality, pset Supercube, MCDB& mcdb) {
-	printf("(0, 0) %d %d\n", Totality->count, set_count_ones(Supercube));
-
 	// 分割資料
 	chunk chs(MAX(row_num, 1), MAX(col_num, 1), mcdb.TABLE_PQ->count, mcdb.TABLE_PQ->sf_size);
 	chs.order1(); //分割時的資料排序方式
 	//chs.display();
-	printf("chs.chunk_cnt: %d\n", chs.chunk_cnt); // 分割的個數
+	printf("number of chunks: %d\n", chs.chunk_cnt); // 分割的個數
 
 	int sequential_end = chs.chunk_cnt;
 
@@ -243,11 +241,13 @@ pset_family partial_mapping(pset_family Totality, pset Supercube, MCDB& mcdb) {
 		/*以下擇一使用*/
 
 		/*1. 部分平行化，PPBM設為1則為未平行化的版本  (主要使用這個)*/
-		partial_parallel_mapping_block(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, temp_Totality2, Supercube, mcdb);
-		
-		/*2. cm150a 複數積項配對(未平行化) window size = 2的實驗*/
-		//partial_parallel_mapping_block_window(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, temp_Totality2, Supercube, mcdb, window);
-		
+		if (EXP_WINDOW_SIZE == 0) {
+			partial_parallel_mapping_block(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, temp_Totality2, Supercube, mcdb);
+		}
+		else {
+			/*2. cm150a 複數積項配對(未平行化) window size = 2的實驗*/
+			//partial_parallel_mapping_block_window(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, temp_Totality2, Supercube, mcdb, window);
+		}
 		/*3. 原始paper的重現實驗 */
 		//paper_partial_mapping_block(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, Supercube, mcdb);
 		
