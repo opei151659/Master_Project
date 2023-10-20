@@ -193,4 +193,45 @@ public:
 
         return floatValue;
     }
+
+    void help() {
+        cout << "# 輸入參數說明:" << endl;
+        cout << "name.pla -IP -IPA " << endl;
+        cout << "" << endl;
+        cout << "NUM代表整數 FNUM代表小數  " << endl;
+        cout << "-IN:NUM   擴展輸入的input個數，數字小於原本大小包持原樣，最大為128 (0 ~ 128)   " << endl;
+        cout << "-IP     考慮input permutation  " << endl;
+        cout << "-IPA    考慮input phase assignment  " << endl;
+        cout << "-OP     考慮output permutation  " << endl;
+        cout << "-OPA    考慮output phase assignment  " << endl;
+        cout << "-RIP    打亂輸入random input permutation  " << endl;
+        cout << "-RIPA   打亂輸入random input phase assignment  " << endl;
+        cout << "-ROP    打亂輸入random output permutation  " << endl;
+        cout << "-ROPA   打亂輸出random output phase assignment  " << endl;
+        cout << "-RM:NUM   移除on-set 與off-set 的百分比 (0.0 ~ 1.1) ex: 0.1表示移除10%  " << endl;
+        cout << "-ROW:NUM  row(on-set) 要分割的份數 0:表示分割成#row 份 1: 表示無分割  " << endl;
+        cout << "-COL:NUM  column(off-set) 要分割的份數 0:表示分割成#col 份 1: 表示無分割  " << endl;
+        cout << "-T:NUM    使用執行緒的最大個數 (最小為1) 最好<=CPU的最大值行緒個數有做限制  " << endl;
+        cout << "-CHK:NUM    執行相同任務時每個執行緒所分配的區塊大小 (最小為1) 100適合絕大多數情況  " << endl;
+        cout << "-OMP    使用的平行化函式庫OMP 不可與'-CPP'與'-TBB'同時使用  " << endl;
+        cout << "-CPP      使用的平行化函式庫CPP 不可與'-OMP'與'-TBB'同時使用  " << endl;
+        cout << "-TBB      使用的平行化函式庫TBB 不可與'-OMP'與'-CPP'同時使用  " << endl;
+        cout << "-SIG:NUM  選擇使用的輸入特徵值(輸入為10進位) 0b0001: check_unate, 0b0010 = check_ENE, 0b0100 = check_KSIG, 0b1000 = check_cofactor 可以同時使用多個 (15(  1111))  " << endl;
+        cout << "-MCQE:NUM 選擇使用的MCQE RULE 0b0001: Rule1, 0b0010 = Rule2, 0b0100 = Rule3, 0b1000 = Rule4 可以同時使用多個 (15(1111))  " << endl;
+        cout << "-NTP    不使用執行緒池進行平行化，只可與'-CPP'以起始用    " << endl;
+        cout << "-ALLP   使用全部平行化，未使用則為部分平行化，只可與'-CPP'以起始用  " << endl;
+        cout << "" << endl;
+        cout << "### 以下4個指令會自動將設定對應實驗參數 僅需使用以下單個指令 建議不要與其他指令共用       " << endl;
+        cout << "-OutputSIG  執行輸出特徵值實驗   " << endl;
+        cout << "-InputSIG 執行輸入特徵值實驗  " << endl;
+        cout << "-ALLMCQE  執行MCQE所有組合實驗  " << endl;
+        cout << "-WINDOWSIZE 執行複數積項配對window size = 2實驗  " << endl;
+        cout << "  " << endl;
+        cout << "預設參數  " << endl;
+        cout << "-CPP -SIG:7 -MCQE:15 -T:1 -ROW:1 -COL:1 -RM:0  " << endl;
+        cout << "  " << endl;
+        cout << "# 範例  " << endl;
+        cout << ".\x64\Debug\Espresso-BM.exe pla\alu2.pla  -IP -IPA -T:24   " << endl;
+    }
 };
+

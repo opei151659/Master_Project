@@ -19,6 +19,8 @@ Parallel Boolean Matching based on Espresso
 # 輸入參數說明:
 name.pla -IP -IPA 
 
+-h -H -help -HELP 會出現此文檔
+
 NUM代表整數 FNUM代表小數  
 -IN:NUM   擴展輸入的input個數，數字小於原本大小包持原樣，最大為128 (0 ~ 128)   
 -IP     考慮input permutation  
