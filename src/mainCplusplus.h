@@ -64,7 +64,7 @@ using namespace std;
 #define print_cost 1
 #define print_detail 0
 #define notation 2			/* 1:表示abcda'b'c'd' , 2:表示aa'bb'cc'dd'*/ /*notation 1 的產生部分未完成*/
-#define EXECost(fct, str) {clock_t t = clock();fct;if (print_cost) printf("%s: %.3lf\n", str, ((double)clock() - (double)t) / (double)CLOCKS_PER_SEC);}
+#define EXECost(fct, str) {clock_t t = clock();fct;if (print_cost) printf("%s: %.3lf sec\n", str, ((double)clock() - (double)t) / (double)CLOCKS_PER_SEC);}
 #define EXECost_W(fct, cost) {cost = clock();fct; cost = clock()-cost;}
 #define SF_SORT_assend(P) {P = sf_unlist(sf_sort(P, (qsort_compare_func)ascend), P->count, P->sf_size);}
 

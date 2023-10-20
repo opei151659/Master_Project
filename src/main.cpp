@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
             }
             /* 以下是特定實驗的指令 使用時建議單獨使用*/
             /* 輸出特徵值實驗*/
-            /* 範例 pla\cm150a.pla pla\cm150a.pla OutputSIG*/
+            /* 範例 pla\cm150a.pla -OutputSIG*/
             else if (arg == "-OutputSIG") {
                 extand_input_num = 0;
                 isINP = 1;
@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
                 EXP_SIG_OUTPUT = 1; /*計算輸出特徵值*/
             }
             /* 輸入特徵值實驗*/
-            /* 範例 pla\cm150a.pla pla\cm150a.pla InputSIG*/
+            /* 範例 pla\cm150a.pla -InputSIG*/
             else if (arg == "-InputSIG") {
                 extand_input_num = 0;
                 isINP = 1;
@@ -288,7 +288,7 @@ int main(int argc, char** argv) {
                 EXP_SIG_INPUT = 1; /*計算輸入特徵值*/
             }
             /* MCQE所有組合實驗*/
-            /* 範例 pla\cm150a.pla pla\cm150a.pla ALLMCQE*/
+            /* 範例 pla\cm150a.pla -ALLMCQE*/
             else if (arg == "-ALLMCQE") {
                 extand_input_num = 0;
                 isINP = 1;
@@ -299,7 +299,10 @@ int main(int argc, char** argv) {
                 ppbm_thread_num = 1;
                 EXP_ALL_MCQE = 1; /*計算MCQE所有組合*/
             }
+            /* 複數積項配對實驗實驗*/
+            /* 範例 pla\cm150a.pla --WINDOWSIZE*/
             else if (arg == "-WINDOWSIZE") {
+                cout << "you have chosen the -WINDOWSIZE mode, pls make sure the PLA file is cm150a.pla " << endl;
                 isINP = 1;
                 isINN = 1;
                 isOUTP = 0;
