@@ -39,8 +39,8 @@ NUM代表整數 FNUM代表小數
 -OMP    使用的平行化函式庫OMP 不可與'-CPP'與'-TBB'同時使用  
 -CPP      使用的平行化函式庫CPP 不可與'-OMP'與'-TBB'同時使用  
 -TBB      使用的平行化函式庫TBB 不可與'-OMP'與'-CPP'同時使用  
--SIG:NUM  選擇使用的輸入特徵值(輸入為10進位) 0b0001: check_unate, 0b0010 = check_ENE, 0b0100 = check_KSIG, 0b1000 = check_cofactor 可以同時使用多個 (15(  1111))  
--MCQE:NUM 選擇使用的MCQE RULE 0b0001: Rule1, 0b0010 = Rule2, 0b0100 = Rule3, 0b1000 = Rule4 可以同時使用多個 (15(1111))  
+-SIG:NUM  選擇使用的輸入特徵值(輸入為10進位) 表示為 0b0001: check_unate, 0b0010 = check_ENE, 0b0100 = check_KSIG, 0b1000 = check_cofactor 可以同時使用多個 (15(  1111))  
+-MCQE:NUM 選擇使用的MCQE RULE(輸入為10進位) 表示為 0b0001: Rule1, 0b0010 = Rule2, 0b0100 = Rule3, 0b1000 = Rule4 可以同時使用多個 (15(1111))  
 -NTP    不使用執行緒池進行平行化，只可與'-CPP'以起始用    
 -ALLP   使用全部平行化，未使用則為部分平行化，只可與'-CPP'以起始用  
 
