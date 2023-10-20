@@ -17,7 +17,10 @@ Parallel Boolean Matching based on Espresso
 
   
 # 輸入參數說明:
-name.pla -IP -IPA 
+name.pla -IP -IPA
+
+如需比對兩個電路: (必須人工確定兩個電路的輸入與輸出個數相同)
+name.pla name.pla -IP -IPA
 
 -h -H -help -HELP 會出現此文檔
 
