@@ -48,10 +48,10 @@ NUM代表整數 FNUM代表小數
 -ALLP   使用全部平行化，未使用則為部分平行化，只可與'-CPP'以起始用  
 
 ### 以下4個指令會自動將設定對應實驗參數 僅需使用以下單個指令 建議不要與其他指令共用       
--OutputSIG  執行輸出特徵值實驗   
--InputSIG 執行輸入特徵值實驗  
--ALLMCQE  執行MCQE所有組合實驗  
--WINDOWSIZE 執行複數積項配對window size = 2實驗  
+-OutputSIG  執行輸出特徵值實驗  (-IP -IPA -OP -T:1)
+-InputSIG 執行輸入特徵值實驗  (-IP -IPA -T:1)
+-ALLMCQE  執行MCQE所有組合實驗  (-IP -IPA -T:1)
+-WINDOWSIZE 執行複數積項配對window size = 2實驗  (-IP -IPA -T:1)
   
 預設參數  
 -CPP -SIG:7 -MCQE:15 -T:1 -ROW:1 -COL:1 -RM:0  

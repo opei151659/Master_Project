@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
                 extand_input_num = 0;
                 isINP = 1;
                 isINN = 1;
-                isOUTP = 0;
+                isOUTP = 1;
                 isOUTN = 0;
                 remove_sf_rate = 0;
                 ppbm_thread_num = 1;
