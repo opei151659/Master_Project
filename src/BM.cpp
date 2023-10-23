@@ -248,7 +248,7 @@ pset_family partial_mapping(pset_family Totality, pset Supercube, MCDB& mcdb) {
 			/*2. cm150a 複數積項配對(未平行化) window size = 2的實驗*/
 			partial_parallel_mapping_block_window(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, temp_Totality2, Supercube, mcdb, window);
 		}
-		/*3. 原始paper的重現實驗 */
+		/*3. 原始paper的重現實驗(移植) */
 		//paper_partial_mapping_block(chs.chunks[i].f_begin, chs.chunks[i].f_end, chs.chunks[i].g_begin, chs.chunks[i].g_end, Totality, temp_Totality, Supercube, mcdb);
 		
 		/*4. 第一版改良後的PM(完全未平行化版)*/  /*!!!可能有缺少部分加速技巧!!! 未使用此做實驗!!!*/
