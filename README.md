@@ -59,3 +59,22 @@ NUM代表整數 FNUM代表小數
 # 範例  
 .\x64\Debug\Espresso-BM.exe pla\alu2.pla  -IP -IPA -T:24   
 
+# 資料庫連結設定 (下載完整專案則不須手動設定)
+1.在vs屬性頁 -> C++ -> 一般 -> 其他Include目錄 中加入  
+Espresso: Espresso\src; 的路徑  
+OneAPI: oneapi-tbb-2021.10.0\include; 的路徑  
+Boost: boost_1_82_0; 的路徑
+  
+2.在vs屬性頁 -> 連結器 -> 一般 -> 其他程式庫目錄 中加入  
+Espresso: Espresso\Debug; 的路徑  
+OneAPI: oneapi-tbb-2021.10.0\lib\intel64\vc14; 的路徑  
+Boost: boost_1_82_0\lib; 的路徑
+  
+3.在vs屬性頁 -> 連結器 -> 輸入 -> 其他相依性中加入 ESPRESSO.lib;  
+  
+4.在vs屬性頁 -> C++ -> 語言 勾選開啟MP支援 啟用OpenMP  
+5.在vs屬性頁 -> C++ -> 語言 C++ 語言表準改成C++ 17 or C++ 20                       
+  
+# 可能的Debug 排除  (下載完整專案則不須手動設定) 
+1. 在vs屬性頁 -> C++ -> 語言 -> 一致性模式 改成否(/permissive)  
+2. 在vs屬性頁 -> C++ -> 前置處理器 -> 前置處理器定義加入 _CRT_SECURE_NO_WARNINGS;  
