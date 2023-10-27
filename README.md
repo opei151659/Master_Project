@@ -2,8 +2,9 @@
 Parallel Boolean Matching based on Espresso  
   
 # 安裝步驟
-1.下載整個專案 並解壓縮  
+1.下載整個專案 並解壓縮 
 2.進入external資料夾，將boost、Espresso與openapi解壓縮，解壓縮後資料夾中會有三個資料夾，如下:  
+  (如無法順利解壓縮請到下面使用library下載並放到對應位置)
   external  
     ---- boost_1_82_0  
     ---- Espresso  
@@ -78,3 +79,11 @@ Boost: boost_1_82_0\lib; 的路徑
 # 可能的Debug 排除  (下載完整專案則不須手動設定) 
 1. 在vs屬性頁 -> C++ -> 語言 -> 一致性模式 改成否(/permissive)  
 2. 在vs屬性頁 -> C++ -> 前置處理器 -> 前置處理器定義加入 _CRT_SECURE_NO_WARNINGS;  
+
+# 使用library
+## Espresso[
+https://github.com/Gigantua/Espresso)https://github.com/Gigantua/Espresso
+## boost
+ https://www.boost.org/ 使用的版本為boost_1_82_0
+## IntelTBB
+https://github.com/oneapi-src/oneTBB 使用的版本為oneapi-tbb-2021.9.0
