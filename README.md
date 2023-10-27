@@ -81,7 +81,7 @@ Boost: boost_1_82_0\lib; 的路徑
 2. 在vs屬性頁 -> C++ -> 前置處理器 -> 前置處理器定義加入 _CRT_SECURE_NO_WARNINGS;  
 
 # 使用library
-## Espresso[
+## Espresso
 https://github.com/Gigantua/Espresso)https://github.com/Gigantua/Espresso
 ## boost
  https://www.boost.org/ 使用的版本為boost_1_82_0
