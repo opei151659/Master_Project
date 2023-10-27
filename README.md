@@ -82,7 +82,7 @@ Boost: boost_1_82_0\lib; 的路徑
 
 # 使用library
 ## Espresso
-https://github.com/Gigantua/Espresso)https://github.com/Gigantua/Espresso
+https://github.com/Gigantua/Espresso
 ## boost
  https://www.boost.org/ 使用的版本為boost_1_82_0
 ## IntelTBB
